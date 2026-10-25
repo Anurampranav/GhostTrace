@@ -227,6 +227,37 @@ class ResourceMapBuilder:
             if uid:
                 self.resource_to_user[rid] = {"user_id": uid, "source": "evidence", "evidence_id": finding.evidence_id}
 
+        # 3. Activity-based batch propagation for deletion worker executions
+        worker_acts = [a for acts in self.activity.by_resource.values() for a in acts if a.get("source_system") == "deletion_worker"]
+        worker_acts.sort(key=lambda x: x.get("event_time", ""))
+
+        runs = []
+        cur_run = []
+        last_t = None
+        for a in worker_acts:
+            try:
+                t = datetime.fromisoformat(a["event_time"].replace("Z", "+00:00"))
+                if last_t is None or (t - last_t) <= timedelta(minutes=60):
+                    cur_run.append(a)
+                else:
+                    if cur_run:
+                        runs.append(cur_run)
+                    cur_run = [a]
+                last_t = t
+            except Exception:
+                pass
+        if cur_run:
+            runs.append(cur_run)
+
+        for run in runs:
+            uids = {self.resource_to_user[a["resource_id"]]["user_id"] for a in run if a.get("resource_id") in self.resource_to_user}
+            if len(uids) == 1:
+                uid = list(uids)[0]
+                for a in run:
+                    rid = a.get("resource_id")
+                    if rid and rid not in self.resource_to_user:
+                        self.resource_to_user[rid] = {"user_id": uid, "source": "activity_run"}
+
     def _extract_user_from_finding(self, f: EvidenceFinding) -> Optional[str]:
         """Try to extract a user_id from a finding's data."""
         data = f.data
@@ -979,6 +1010,7 @@ def check_absence_in_failover(
     sql_path: Path,
     closure: IdentityClosure,
     activity_index: SystemActivityIndex,
+    resource_map: Optional[ResourceMapBuilder] = None,
 ) -> List[AuditStep]:
     """
     Check if a user's account is absent from a failover/primary SQL replica.
@@ -987,11 +1019,21 @@ def check_absence_in_failover(
     uid = closure.user_id
     all_emails = closure.emails
 
-    m = re.match(r"user_(\d+)", uid)
-    if not m:
-        return []
-    user_num = int(m.group(1))
-    possible_account_ids = [f"account_{user_num:03d}", f"account_{user_num}"]
+    real_account = None
+    if resource_map:
+        for rid, data in resource_map.resource_to_user.items():
+            if data.get("user_id") == uid and rid.startswith("account_"):
+                real_account = rid
+                break
+
+    if real_account:
+        possible_account_ids = [real_account]
+    else:
+        m = re.match(r"user_(\d+)", uid)
+        if not m:
+            return []
+        user_num = int(m.group(1))
+        possible_account_ids = [f"account_{user_num:03d}", f"account_{user_num}"]
 
     try:
         conn = sqlite3.connect(":memory:")
@@ -1391,7 +1433,7 @@ def audit_case(
                     cap = datetime.fromisoformat(entry.captured_at.replace("Z", "+00:00"))
                     if cap <= cutoff:
                         add_steps(check_absence_in_failover(
-                            entry.file_id, entry.resolved_path, closure, activity_index
+                            entry.file_id, entry.resolved_path, closure, activity_index, resource_map
                         ))
                 except (ValueError, TypeError):
                     pass

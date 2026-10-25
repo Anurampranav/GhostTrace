@@ -607,6 +607,15 @@ class EvidenceIndexer:
 
         results = []
         for f in candidates:
+            if f.file_format == "log" and f.record_timestamp:
+                try:
+                    r_ts = datetime.fromisoformat(f.record_timestamp.replace("Z", "+00:00"))
+                    if r_ts <= cutoff:
+                        results.append(f)
+                    continue
+                except (ValueError, TypeError):
+                    pass
+
             if f.file_captured_at:
                 try:
                     f_cap = datetime.fromisoformat(f.file_captured_at.replace("Z", "+00:00"))

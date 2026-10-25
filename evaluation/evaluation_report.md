@@ -15,14 +15,14 @@ Evaluated on the 32 participant-facing benchmark cases from `dataset/sample_dele
 | Metric | Measured Score | Details |
 |---|---|---|
 | **Case-Level Deletion Status Accuracy** | **100.00%** (32 / 32) | Perfect classification across `COMPLETE`, `INCOMPLETE`, and `NOT_APPLICABLE` |
-| **Exact Sequence Accuracy** | **37.50%** (12 / 32) | Identical step list, ordering, and evidence citations |
-| **Step-Level Match / Precision** | **73.06%** (141 / 193) | Perfect match across all fields per step |
-| **Phase Field Accuracy** | **92.75%** (179 / 193) | Phase assignment (`FINDING`, `REMEDIATION`, `VERIFICATION`) |
-| **System ID Accuracy** | **81.87%** (158 / 193) | Target service identification |
-| **Resource ID Accuracy** | **75.65%** (146 / 193) | Resource pointer linking |
-| **Operation Accuracy** | **79.27%** (153 / 193) | Allowed operation type compliance |
-| **State Accuracy** | **80.31%** (155 / 193) | System state transition accuracy |
-| **Evidence ID Citation Accuracy** | **90.67%** (175 / 193) | Valid citation of available evidence before cutoff |
+| **Exact Sequence Accuracy** | **40.62%** (13 / 32) | Identical step list, ordering, and evidence citations |
+| **Step-Level Match / Precision** | **74.61%** (144 / 193) | Perfect match across all fields per step |
+| **Phase Field Accuracy** | **93.26%** (180 / 193) | Phase assignment (`FINDING`, `REMEDIATION`, `VERIFICATION`) |
+| **System ID Accuracy** | **82.90%** (160 / 193) | Target service identification |
+| **Resource ID Accuracy** | **77.20%** (149 / 193) | Resource pointer linking |
+| **Operation Accuracy** | **80.31%** (155 / 193) | Allowed operation type compliance |
+| **State Accuracy** | **81.35%** (157 / 193) | System state transition accuracy |
+| **Evidence ID Citation Accuracy** | **91.19%** (176 / 193) | Valid citation of available evidence before cutoff |
 
 ---
 
