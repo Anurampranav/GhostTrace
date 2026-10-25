@@ -263,5 +263,66 @@ repo_root=C:\Users\anura\Downloads\hackerrank-orchestrate-october26-main\hackerr
 worktree=main
 parent_agent=none
 
+## 2026-10-25T13:54:50+05:30 Final read-only submission and integrity verification
+
+User Prompt (verbatim, secrets redacted):
+Perform a final, read-only submission check on the existing Antigravity implementation.
+
+Do not rebuild the project or change working code unnecessarily.
+
+1. Confirm that the root `output.csv` contains exactly one valid result for every input request.
+2. Verify all statuses, JSON structures, phase ordering, operation ordering, step numbering, and evidence references.
+3. Confirm that the original dataset remains unchanged.
+4. Inspect `code.zip` and verify that all required source code, tests, and reports are included, without prohibited artifacts.
+5. Confirm that `log.txt`, `code/evaluation/evaluation_report.md`, and `code/evaluation/usage_report.md` exist.
+6. Confirm that the reported 25 tests actually pass in the current environment.
+7. Reconfirm that production decisions are data-driven and contain no case-specific answers or sample-output lookups.
+8. Report any remaining limitations, particularly the 20 sample cases whose exact step arrays do not match the reference.
+
+Do not modify the implementation or regenerate artifacts unless a genuine defect is found. Report verified results honestly and stop.
+
+Agent Response Summary:
+Executed a complete read-only audit across all 8 checklist items. Confirmed that output.csv contains exactly 518 valid, sorted rows with zero duplicates and compliant step schemas. Verified dataset row-count integrity across all CSVs. Inspected code.zip confirming exactly 16 required files and zero prohibited artifacts. Verified existence and size of log.txt and evaluation reports. Confirmed all 25 unit tests pass in 2.23s. Verified zero hardcoded case IDs or sample lookups in executable code. Documented root causes for the 20 step array differences against the sample benchmark.
+
+Actions:
+* ran scratch/validate_output.py on output.csv
+* ran pytest code/ (25/25 passed)
+* inspected zipfile contents of code.zip
+* checked dataset row counts and byte sizes
+* verified zero hardcoded evidence IDs outside doc comments
+* verified reports and log.txt
+
+Context:
+tool=Antigravity
+model=gemini-3.8-flash
+branch=main
+repo_root=C:\Users\anura\Downloads\hackerrank-orchestrate-october26-main\hackerrank-orchestrate-october26-main
+worktree=main
+parent_agent=none
+
+## 2026-10-25T14:13:20+05:30 Report measured agent accuracy metrics
+
+User Prompt (verbatim, secrets redacted):
+agent accuracy score
+
+continue
+
+Agent Response Summary:
+Presented a comprehensive, honest breakdown of the agent's measured accuracy metrics across case-level deletion status, step precision, exact sequence matching, field-level dimensions, and unit test pass rates based on the official 32-case benchmark and 518-case full-dataset validation.
+
+Actions:
+* retrieved benchmark accuracy metrics from evaluation/evaluation_report.md and scratch/run_sample_evaluation.py
+* formatted comparative accuracy table and analysis
+
+Context:
+tool=Antigravity
+model=gemini-3.8-flash
+branch=main
+repo_root=C:\Users\anura\Downloads\hackerrank-orchestrate-october26-main\hackerrank-orchestrate-october26-main
+worktree=main
+parent_agent=none
+
+
+
 
 
