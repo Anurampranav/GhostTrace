@@ -277,6 +277,10 @@ class ResourceMapBuilder:
             for ident in f.identifiers:
                 if ident.startswith("user_"):
                     return ident
+                if "@" in ident:
+                    c = self.resolver.resolve_email(ident)
+                    if c:
+                        return c.user_id
         return None
 
     def get_user_for_resource(self, resource_id: str) -> Optional[str]:

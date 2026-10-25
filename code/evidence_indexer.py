@@ -28,6 +28,7 @@ import csv
 import json
 import re
 import sqlite3
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -359,8 +360,10 @@ class EvidenceIndexer:
                     for r in snap.get("records", []):
                         if isinstance(r, dict):
                             r_copy = dict(r)
-                            if snap_ts and "timestamp" not in r_copy:
-                                r_copy["timestamp"] = snap_ts
+                            if snap_ts:
+                                r_copy["captured_at"] = snap_ts
+                                if "timestamp" not in r_copy:
+                                    r_copy["timestamp"] = snap_ts
                             if snap_store and "data_store" not in r_copy:
                                 r_copy["data_store"] = snap_store
                             records.append(r_copy)
@@ -386,7 +389,7 @@ class EvidenceIndexer:
                 res_id = str(rec.get("resource_id") or rec.get("job_id") or rec.get("connector_id") or rec.get("record_id") or "")
                 if res_id:
                     idents.add(res_id.lower())
-                ts = rec.get("timestamp") or rec.get("created_at") or rec.get("updated_at") or rec.get("event_time") or rec.get("captured_at")
+                ts = rec.get("timestamp") or rec.get("created_at") or rec.get("updated_at") or rec.get("event_time") or rec.get("captured_at") or rec.get("observed_at")
                 system_id = rec.get("_system_id") or rec.get("data_store") or self._infer_system_id(entry.origin, entry.file_path)
 
                 finding = EvidenceFinding(
@@ -410,22 +413,50 @@ class EvidenceIndexer:
         with open(entry.resolved_path, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
-        system_id = self._infer_system_id(entry.origin, entry.file_path)
+        default_system_id = self._infer_system_id(entry.origin, entry.file_path)
+
+        # First pass: correlate distributed trace spans by trace_id
+        trace_idents: Dict[str, Set[str]] = defaultdict(set)
+        for line in lines:
+            m = re.search(r'(?:trace_id|traceId)[":=\s]+([A-Za-z0-9_-]+)', line)
+            if m:
+                tid = m.group(1)
+                tid_idents = self._extract_identifiers(line)
+                if tid_idents:
+                    trace_idents[tid].update(tid_idents)
+
         for line_no, line in enumerate(lines, start=1):
             line = line.strip()
             if not line:
                 continue
 
             idents = self._extract_identifiers(line)
+
+            # Correlate with trace if present
+            m = re.search(r'(?:trace_id|traceId)[":=\s]+([A-Za-z0-9_-]+)', line)
+            if m and m.group(1) in trace_idents:
+                idents.update(trace_idents[m.group(1)])
+
             # Try parsing timestamp from beginning of line (e.g. 2026-07-30T10:14:22Z or [2026-07-30...])
             ts_match = re.search(r"\b(2026-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?Z?)\b", line)
             ts = ts_match.group(1) if ts_match else None
 
             # Resource id
-            res_match = re.search(r"\b(account|search|support|export|analytics|audit_record|backup)_[0-9]+\b", line)
+            res_match = re.search(r"\b(account|search|support|export|analytics|audit_record|backup|data_flow)_[0-9]+\b", line)
             res_id = res_match.group(0) if res_match else ""
             if res_id:
                 idents.add(res_id.lower())
+
+            # Fine-grained system_id from line if available
+            system_id = default_system_id
+            for sys_kw in (
+                "account_service", "search_service", "support_platform",
+                "analytics_platform", "export_service", "backup_service",
+                "security_service", "integration_service"
+            ):
+                if sys_kw in line:
+                    system_id = sys_kw
+                    break
 
             # Only index log lines that contain relevant identifiers or operational states
             if idents or "sync" in line.lower() or "restore" in line.lower() or "delete" in line.lower():
