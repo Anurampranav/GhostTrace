@@ -4,3 +4,9 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 Thumbs.db
+
+# Challenge dataset is maintained on the 'dataset-questions' branch
+dataset/
+scratch/
+CLAUDE.md
+
