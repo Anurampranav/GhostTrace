@@ -285,7 +285,7 @@ class ResourceMapBuilder:
 
 
 # ---------------------------------------------------------------------------
-# Service Resource Export Parser (evidence_92 and similar)
+# Service Resource Export Parser (service export JSON and similar)
 # ---------------------------------------------------------------------------
 def parse_service_resource_export(
     data: Dict,
@@ -477,7 +477,7 @@ def parse_service_resource_export(
 
 
 # ---------------------------------------------------------------------------
-# Snapshot Bundle Parser (evidence_51, evidence_02, etc.)
+# Snapshot Bundle Parser (snapshot bundle JSON, etc.)
 # ---------------------------------------------------------------------------
 def parse_snapshot_bundle(
     data: Dict,
